@@ -55,8 +55,8 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             drawablePoints.clear()
             drawablePoints.addAll(getDrawablePoints())
 
-            leftBarPositionX = width / 3f
-            rightBarPositionX = 2 * width / 3f
+            leftBarPositionX = 0f
+            rightBarPositionX = width.toFloat()
 
             invalidate()
         }
