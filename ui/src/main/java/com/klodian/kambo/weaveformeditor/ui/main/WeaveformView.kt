@@ -27,6 +27,11 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         color = Color.GRAY
     }
 
+    private val selectedBarPaint = Paint().apply {
+        color = Color.BLUE  // You can set your preferred tint color here
+        alpha = 25
+    }
+
     private var leftBarPositionX = -1f
     private var rightBarPositionX = -1f
     private var isLeftDragging = false
@@ -103,6 +108,11 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         canvas.drawCircle(leftBarPositionX, height.toFloat() - 15f, 15f, dotPaint)
         canvas.drawCircle(rightBarPositionX, 15f, 15f, dotPaint)
 
+        // Draw the selected slice between the bars
+        canvas.drawRect(
+            leftBarPositionX, 0f, rightBarPositionX, height.toFloat(),
+            selectedBarPaint
+        )
     }
 
     private fun renderWeave(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
