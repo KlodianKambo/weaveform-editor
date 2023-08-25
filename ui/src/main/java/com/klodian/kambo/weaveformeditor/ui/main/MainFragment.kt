@@ -29,18 +29,13 @@ class MainFragment : Fragment() {
 
     private lateinit var binding: FragmentMainBinding
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Specify the initial directory as the Downloads directory
-        // Register the activity result launcher
+    private val fetchFileResult =
         registerForActivityResult(ActivityResultContracts.GetContent()) { fileUri ->
             // Now you can work with the selected file URI
             if (fileUri != null) {
                 try {
                     val inputStream: InputStream? =
                         requireActivity().contentResolver.openInputStream(fileUri)
-
 
                     inputStream?.let {
                         val coordinates = parseCoordinates(inputStream)
@@ -54,9 +49,7 @@ class MainFragment : Fragment() {
                     e.printStackTrace()
                 }
             }
-        }.launch("*/*")
-
-    }
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -71,9 +64,17 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.saveSliceFab.setOnClickListener {
+            binding.weaveform.getSelectedRangeValues()
+                .onEach { println("(!) $it") }
+        }
 
+        binding.fetchFileFab.setOnClickListener {
+            fetchFileResult.launch("*/*")
+        }
     }
 
+    // TODO move in data layer
     private fun parseCoordinates(inputStream: InputStream): List<Pair<Float, Float>> {
         val coordinates: MutableList<Pair<Float, Float>> = ArrayList()
 
