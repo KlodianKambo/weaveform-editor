@@ -55,6 +55,9 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             drawablePoints.clear()
             drawablePoints.addAll(getDrawablePoints())
 
+            leftBarPositionX = width / 3f
+            rightBarPositionX = 2 * width / 3f
+
             invalidate()
         }
     }
@@ -77,11 +80,6 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         renderWeave(canvas, drawablePoints)
 
         drawTextValues(canvas, drawablePoints)
-
-        if (leftBarPositionX == -1f || rightBarPositionX == -1f) {
-            leftBarPositionX = width / 3f  // Initial positions
-            rightBarPositionX = 2 * width / 3f
-        }
 
         // Draw the left vertical bar
         canvas.drawRect(
@@ -166,7 +164,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
     private fun getDrawablePoints(): List<DrawablePoint> {
         val drawablePoints = mutableListOf<DrawablePoint>()
-        val widthMultiplier = width / (coordinates.size - 1)
+        val widthMultiplier = width / ((coordinates.size - 1).takeIf { it > 0 } ?: 1)
 
         var coordinatesIterator: Iterator<Pair<Float, Float>> = coordinates.iterator()
         var xIndex = 0
