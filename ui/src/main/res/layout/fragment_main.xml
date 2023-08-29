@@ -2,23 +2,15 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
-    android:background="#ff0000"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <com.klodian.kambo.weaveformeditor.ui.main.WeaveformView
-        android:paddingTop="@dimen/size48"
-        android:paddingBottom="@dimen/size16"
-        android:paddingStart="@dimen/size48"
-        android:paddingEnd="@dimen/size16"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="@dimen/size48"
-
-        android:layout_marginBottom="@dimen/size120"
         android:id="@+id/weaveform"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#aadddddd"
+        android:layout_marginBottom="@dimen/size90"
+        android:padding="@dimen/size16"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

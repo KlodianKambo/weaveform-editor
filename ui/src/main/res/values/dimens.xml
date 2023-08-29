@@ -4,4 +4,5 @@
     <dimen name="size120">120dp</dimen>
     <dimen name="size48">48dp</dimen>
     <dimen name="font16">16sp</dimen>
+    <dimen name="size90">90dp</dimen>
 </resources>
