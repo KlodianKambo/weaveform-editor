@@ -8,6 +8,7 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.abs
 import kotlin.math.absoluteValue
 
 private data class DrawablePoint(
@@ -49,25 +50,28 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         textSize = 16f
     }
 
-    private val coordinates = mutableListOf<Pair<Float, Float>>()
+    private val coordinates = mutableListOf<UiWeaveFrequency>()
     private val drawablePoints = mutableListOf<DrawablePoint>()
 
-    fun setCoordinates(newCoordinates: List<Pair<Float, Float>>) {
+    fun setCoordinates(newCoordinates: List<UiWeaveFrequency>) {
         if (newCoordinates != coordinates) {
             coordinates.clear()
-            coordinates.addAll(newCoordinates)
-
             drawablePoints.clear()
-            drawablePoints.addAll(getDrawablePoints())
+
+            if(newCoordinates.isNotEmpty()){
+                coordinates.addAll(newCoordinates)
+                drawablePoints.addAll(getDrawablePoints(newCoordinates))
+            }
 
             leftBarPositionX = 0f
             rightBarPositionX = width.toFloat()
 
             invalidate()
+
         }
     }
 
-    fun getSelectedRangeValues(): List<Pair<Float, Float>> {
+    fun getSelectedRangeValues(): List<UiWeaveFrequency> {
         return drawablePoints
             .distinctBy { it.xValue }
             .filter { it.xDraw in leftBarPositionX..rightBarPositionX }
@@ -144,6 +148,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
                     isRightDragging = true
                 }
             }
+
             MotionEvent.ACTION_MOVE -> {
                 if (isLeftDragging) {
                     leftBarPositionX = event.x.coerceIn(0f, rightBarPositionX - barWidth - 50f)
@@ -154,6 +159,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
                     invalidate()
                 }
             }
+
             MotionEvent.ACTION_UP -> {
                 isLeftDragging = false
                 isRightDragging = false
@@ -163,7 +169,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     }
 
     private fun isCloseToBar(barX: Float, event: MotionEvent): Boolean {
-        return Math.abs(event.x - barX) <= 15f
+        return abs(event.x - barX) <= 40f
     }
 
     private fun drawTextValues(canvas: Canvas, drawablePoints: List<DrawablePoint>){
@@ -172,20 +178,20 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         }
     }
 
-    private fun getDrawablePoints(): List<DrawablePoint> {
+    private fun getDrawablePoints(uiWeaveFrequencies: List<UiWeaveFrequency>): List<DrawablePoint> {
         val drawablePoints = mutableListOf<DrawablePoint>()
-        val widthMultiplier = width / ((coordinates.size - 1).takeIf { it > 0 } ?: 1)
+        val widthMultiplier = width / ((uiWeaveFrequencies.size - 1).takeIf { it > 0 } ?: 1)
 
-        var coordinatesIterator: Iterator<Pair<Float, Float>> = coordinates.iterator()
+        var coordinatesIterator: Iterator<UiWeaveFrequency> = uiWeaveFrequencies.iterator()
         var xIndex = 0
         var point = coordinatesIterator.next()
 
         drawablePoints.add(
             DrawablePoint(
                 xIndex.toFloat() * widthMultiplier,
-                point.first.absoluteValue * height / 2 + height / 2,
+                scaleCenterHeight(point.minValue.absoluteValue),
                 xIndex.toFloat(),
-                point.first.absoluteValue
+                point.minValue.absoluteValue
             )
         )
 
@@ -195,27 +201,31 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             drawablePoints.add(
                 DrawablePoint(
                     xIndex.toFloat() * widthMultiplier,
-                    point.first.absoluteValue * height / 2 + height / 2,
+                    scaleCenterHeight(point.minValue.absoluteValue),
                     xIndex.toFloat(),
-                    point.first
+                    point.minValue
                 )
             )
         }
 
-        coordinatesIterator = coordinates.reversed().iterator()
+        coordinatesIterator = uiWeaveFrequencies.reversed().iterator()
 
         while (coordinatesIterator.hasNext()) {
             point = coordinatesIterator.next()
             drawablePoints.add(
                 DrawablePoint(
                     xIndex.toFloat() * widthMultiplier,
-                    -point.second * height / 2 + height / 2,
+                    scaleCenterHeight(-point.maxValue),
                     xIndex.toFloat(),
-                    point.second
+                    point.maxValue
                 )
             )
             xIndex--
         }
         return drawablePoints
+    }
+
+    private fun scaleCenterHeight(y: Float): Float{
+        return  y * height / 2 + height / 2
     }
 }

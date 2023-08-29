@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="size16">16dp</dimen>
+    <dimen name="size120">120dp</dimen>
+    <dimen name="size48">48dp</dimen>
+    <dimen name="font16">16sp</dimen>
 </resources>

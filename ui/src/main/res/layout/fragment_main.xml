@@ -5,6 +5,36 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/info_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/info_iv"
+            android:layout_width="@dimen/size120"
+            android:layout_height="@dimen/size120" />
+
+        <TextView
+            android:id="@+id/info_tv"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/size48"
+            android:layout_marginTop="@dimen/size48"
+            android:layout_marginEnd="@dimen/size48"
+            android:textColor="#000000"
+            android:textStyle="italic"
+            android:textSize="@dimen/font16" />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
     <com.klodian.kambo.weaveformeditor.ui.main.WeaveformView
         android:id="@+id/weaveform"
         android:layout_width="match_parent"
