@@ -103,5 +103,19 @@ class MainFragment : Fragment() {
                 }
         }
 
+        lifecycleScope.launch {
+            viewLifecycleOwner
+                .repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.loadingFlow.collect(::setLoadingEnabled)
+                }
+        }
+    }
+
+    private fun setLoadingEnabled(isEnabled: Boolean) {
+        binding.loadingLl.isVisible = isEnabled
+        binding.loadingPb.isVisible = isEnabled
+
+        binding.fetchFileFab.isEnabled = !isEnabled
+        binding.saveSliceFab.isEnabled = !isEnabled
     }
 }

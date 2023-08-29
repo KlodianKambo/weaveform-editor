@@ -41,8 +41,14 @@ class MainViewModel @Inject constructor(
     private val _infoFlow = MutableStateFlow<UiInfo?>(welcomeUiInfo)
     val infoFlow = _infoFlow
 
+    private val _loadingFlow = MutableStateFlow(false)
+    val loadingFlow = _loadingFlow
+
     fun parseForSoundTrackWeaveFrequency(inputStream: InputStream?) {
         viewModelScope.launch {
+
+            _loadingFlow.emit(true)
+
             getWeaveFrequencyList(inputStream)
                 .onSuccess {
                     _infoFlow.emit(null)
@@ -62,12 +68,16 @@ class MainViewModel @Inject constructor(
                         )
                     )
                 }
+
+            _loadingFlow.emit(false)
         }
     }
 
     fun saveNewSoundTrack(selectedRangeValues: List<UiWeaveFrequency>) {
         viewModelScope
             .launch {
+                _loadingFlow.emit(true)
+
                 selectedRangeValues
                     .map { WeaveFrequency(it.minValue, it.maxValue) }
                     .let { saveNewSound(it) }
@@ -79,6 +89,8 @@ class MainViewModel @Inject constructor(
                             )
                         )
                     }
+
+                _loadingFlow.emit(false)
             }
     }
 }
