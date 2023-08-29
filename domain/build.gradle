@@ -12,6 +12,9 @@ java {
 
 dependencies {
 
+    implementation "com.google.dagger:hilt-core:2.45"
+    kapt libs.main.hiltKapt
+
     implementation libs.main.kotlin
 
     implementation libs.main.inject
@@ -20,4 +23,6 @@ dependencies {
     // Test
     testImplementation libs.test.kotlinTest
     testImplementation libs.test.kotlinTestImpl
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.coroutines}"
+
 }

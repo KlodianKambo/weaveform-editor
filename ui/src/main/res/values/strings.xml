@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="error_generic">Looks like there is an error, please retry</string>
+    <string name="welcome">Welcome to weaveform Editor. Select a sound file to start editing</string>
+</resources>
