@@ -1,5 +1,6 @@
 package com.klodian.kambo.weaveformeditor.ui.main
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -33,11 +34,15 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         alpha = 25
     }
 
+    private val barToBarDistance = 50f
+    private val barTouchTolerance = 40f
+
     private var leftBarPositionX = -1f
     private var rightBarPositionX = -1f
     private var isLeftDragging = false
     private var isRightDragging = false
-    private val barWidth = 5f
+    private val barWidth = 10f
+    private var requestedClick = false
 
     private val linePaint = Paint().apply {
         isAntiAlias = true
@@ -58,7 +63,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             coordinates.clear()
             drawablePoints.clear()
 
-            if(newCoordinates.isNotEmpty()){
+            if (newCoordinates.isNotEmpty()) {
                 coordinates.addAll(newCoordinates)
                 drawablePoints.addAll(getDrawablePoints(newCoordinates))
             }
@@ -67,7 +72,6 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             rightBarPositionX = width.toFloat()
 
             invalidate()
-
         }
     }
 
@@ -130,49 +134,52 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         canvas.drawPath(weaveFormPath, linePaint)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
 
-                if (isCloseToBar(leftBarPositionX, event) && !isCloseToBar(
-                        rightBarPositionX,
-                        event
-                    )
-                ) {
-                    isLeftDragging = true
-                } else if (!isCloseToBar(leftBarPositionX, event) && isCloseToBar(
-                        rightBarPositionX,
-                        event
-                    )
-                ) {
-                    isRightDragging = true
+                when {
+                    (isCloseToBar(leftBarPositionX, event) &&
+                            !isCloseToBar(rightBarPositionX, event)) -> isLeftDragging = true
+
+                    (!isCloseToBar(leftBarPositionX, event) &&
+                            isCloseToBar(rightBarPositionX, event)) -> isRightDragging = true
+
+                    else -> requestedClick = true
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
                 if (isLeftDragging) {
-                    leftBarPositionX = event.x.coerceIn(0f, rightBarPositionX - barWidth - 50f)
+                    leftBarPositionX = event.x.coerceIn(0f, rightBarPositionX - barWidth - barToBarDistance)
                     invalidate()
                 } else if (isRightDragging) {
                     rightBarPositionX =
-                        event.x.coerceIn(leftBarPositionX + barWidth + 50f, width.toFloat())
+                        event.x.coerceIn(leftBarPositionX + barWidth + barToBarDistance, width.toFloat())
                     invalidate()
                 }
             }
 
             MotionEvent.ACTION_UP -> {
+
                 isLeftDragging = false
                 isRightDragging = false
+
+                if (requestedClick) {
+                    requestedClick = false
+                    performClick()
+                }
             }
         }
         return true
     }
 
     private fun isCloseToBar(barX: Float, event: MotionEvent): Boolean {
-        return abs(event.x - barX) <= 40f
+        return abs(event.x - barX) <= barTouchTolerance
     }
 
-    private fun drawTextValues(canvas: Canvas, drawablePoints: List<DrawablePoint>){
+    private fun drawTextValues(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
         drawablePoints.onEach {
             canvas.drawText(String.format("%.1f", it.yValue), it.xDraw, it.yDraw, pointPaint)
         }
@@ -225,7 +232,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         return drawablePoints
     }
 
-    private fun scaleCenterHeight(y: Float): Float{
-        return  y * height / 2 + height / 2
+    private fun scaleCenterHeight(y: Float): Float {
+        return y * height / 2 + height / 2
     }
 }

@@ -23,4 +23,6 @@ dependencies {
     // Test
     testImplementation libs.test.kotlinTest
     testImplementation libs.test.kotlinTestImpl
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.coroutines}"
+
 }

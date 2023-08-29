@@ -12,12 +12,19 @@ interface SaveNewSound {
 }
 
 
-internal class SaveNewSoundUseCase @Inject constructor(private val fileRepository: FileRepository) :
+internal class SaveNewSoundUseCase @Inject constructor(
+    private val getGetFileName: GetFileName,
+    private val fileRepository: FileRepository
+) :
     SaveNewSound {
 
-    private val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+
     override suspend operator fun invoke(newWeave: List<WeaveFrequency>): Result<File> {
-        val fileName = "audio_track_${dateFormat.format(Date())}.txt"
-        return runCatching { fileRepository.saveCoordinatesToFile(newWeave, fileName) }
+
+        if (newWeave.isEmpty()) return Result.failure(RuntimeException("Empty frequencies"))
+
+        return runCatching {
+            fileRepository.saveCoordinatesToFile(newWeave, getGetFileName())
+        }
     }
 }

@@ -79,6 +79,10 @@ class MainFragment : Fragment() {
             fetchFileResult.launch("*/*")
         }
 
+        binding.weaveform.setOnClickListener {
+            println("(!) CLICK")
+        }
+
         lifecycleScope.launch {
             viewLifecycleOwner
                 .repeatOnLifecycle(Lifecycle.State.STARTED) {

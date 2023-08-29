@@ -14,6 +14,11 @@ internal class GetWeaveFrequencyListUseCase @Inject constructor(
 ) : GetWeaveFrequencyList {
 
     override suspend operator fun invoke(inputStream: InputStream?): Result<List<WeaveFrequency>> {
-        return runCatching { fileRepository.getWeaveFrequencyListFromFile(inputStream) }
+
+        if(inputStream == null) return Result.failure(RuntimeException("Empty inputStream"))
+
+        return runCatching {
+            fileRepository.getWeaveFrequencyListFromFile(inputStream)
+        }
     }
 }

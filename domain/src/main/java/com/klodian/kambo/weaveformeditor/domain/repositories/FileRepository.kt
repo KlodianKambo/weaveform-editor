@@ -5,6 +5,6 @@ import java.io.File
 import java.io.InputStream
 
 interface FileRepository {
-    suspend fun getWeaveFrequencyListFromFile(inputStream: InputStream?): List<WeaveFrequency>
+    suspend fun getWeaveFrequencyListFromFile(inputStream: InputStream): List<WeaveFrequency>
     suspend fun saveCoordinatesToFile(coordinates: List<WeaveFrequency>, fileName: String): File
 }

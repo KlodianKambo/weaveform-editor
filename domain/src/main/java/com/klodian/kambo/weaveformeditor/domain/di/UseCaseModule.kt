@@ -1,9 +1,8 @@
 package com.klodian.kambo.weaveformeditor.domain.di
 
 
-import com.klodian.kambo.weaveformeditor.domain.GetWeaveFrequencyList
+import com.klodian.kambo.weaveformeditor.domain.*
 import com.klodian.kambo.weaveformeditor.domain.GetWeaveFrequencyListUseCase
-import com.klodian.kambo.weaveformeditor.domain.SaveNewSound
 import com.klodian.kambo.weaveformeditor.domain.SaveNewSoundUseCase
 import dagger.Binds
 import dagger.Module
@@ -21,4 +20,6 @@ internal abstract class UseCaseModule {
     @Binds
     abstract fun bindSaveNewSound(impl: SaveNewSoundUseCase): SaveNewSound
 
+    @Binds
+    abstract fun bindGetFileName(impl: GetFileNameUseCase): GetFileName
 }

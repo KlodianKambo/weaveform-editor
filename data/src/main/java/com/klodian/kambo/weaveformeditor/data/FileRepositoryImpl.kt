@@ -16,22 +16,15 @@ class FileRepositoryImpl @Inject constructor(
     private val coroutineDispatcher: CoroutineDispatcher
 ) : FileRepository {
 
-    override suspend fun getWeaveFrequencyListFromFile(inputStream: InputStream?): List<WeaveFrequency> =
+    override suspend fun getWeaveFrequencyListFromFile(inputStream: InputStream): List<WeaveFrequency> =
         withContext(coroutineDispatcher) {
-            if (inputStream != null) {
-                return@withContext parseCoordinates(
-                    inputStream,
-                    coroutineDispatcher
-                )
-            }
-            throw RuntimeException("Something went wrong")
+            parseCoordinates(inputStream)
         }
 
 
     private suspend fun parseCoordinates(
-        inputStream: InputStream,
-        coroutineDispatcher: CoroutineDispatcher
-    ): List<WeaveFrequency> = withContext(coroutineDispatcher) {
+        inputStream: InputStream
+    ): List<WeaveFrequency> {
 
         val coordinates: MutableList<WeaveFrequency> = ArrayList()
 
@@ -71,7 +64,7 @@ class FileRepositoryImpl @Inject constructor(
         }
 
         reader.close()
-        coordinates
+        return coordinates
     }
 
     override suspend fun saveCoordinatesToFile(

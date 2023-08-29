@@ -32,13 +32,14 @@ class FileRepositoryImplTests {
         // assert same content as expected
         assertEquals(expected, weaveFrequencyListResult)
 
+        testFile.deleteRecursively()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun when_file_content_is_empty_then_return_failure() = runTest(dispatcher) {
 
-        val testFile = File("test.txt")
+        val testFile = File("test2.txt")
         testFile.writeText("")
 
         runCatching {
@@ -49,24 +50,14 @@ class FileRepositoryImplTests {
         }.onFailure {
             assert(it is RuntimeException)
         }
-    }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun when_input_stream_is_null_then_return_failure() = runTest(dispatcher) {
-        runCatching { fileRepositoryImpl.getWeaveFrequencyListFromFile(null) }
-            .onSuccess {
-                // assert same content as expected
-                throw RuntimeException("Test failed, the file is correctly formed")
-            }.onFailure {
-                assert(it is RuntimeException)
-            }
+        testFile.deleteRecursively()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun when_parts_per_line_greater_than_2_then_return_failure() = runTest(dispatcher) {
-        val testFile = File("test.txt")
+        val testFile = File("test3.txt")
         // add more parts
         testFile.writeText((1..10).joinToString(separator = " ") { "A" })
 
@@ -78,12 +69,14 @@ class FileRepositoryImplTests {
                 assert(it is IllegalArgumentException)
                 print(it)
             }
+
+        testFile.deleteRecursively()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun when_parts_per_line_equals_1_then_return_failure() = runTest(dispatcher) {
-        val testFile = File("test.txt")
+        val testFile = File("test4.txt")
 
         testFile.writeText("A")
 
@@ -95,6 +88,8 @@ class FileRepositoryImplTests {
                 assert(it is IllegalArgumentException)
                 print(it)
             }
+
+        testFile.deleteRecursively()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -102,7 +97,7 @@ class FileRepositoryImplTests {
     fun when_parts_per_line_are_2_but_not_floats_then_return_number_format_exception() =
         runTest(dispatcher) {
 
-            val testFile = File("test.txt")
+            val testFile = File("test5.txt")
             testFile.writeText("A 1\n")
 
             runCatching { fileRepositoryImpl.getWeaveFrequencyListFromFile(testFile.inputStream()) }
@@ -112,6 +107,8 @@ class FileRepositoryImplTests {
                 }.onFailure {
                     assert(it is NumberFormatException)
                 }
+
+            testFile.deleteRecursively()
         }
 
 
@@ -121,7 +118,7 @@ class FileRepositoryImplTests {
 
         val fileInputWeave = listOf(WeaveFrequency(-1.1f, 1f), WeaveFrequency(-0.6f, 0.5f))
 
-        val expectedFileName = "test.txt"
+        val expectedFileName = "test6.txt"
 
         val savedFile = fileRepositoryImpl.saveCoordinatesToFile(fileInputWeave, expectedFileName)
 
