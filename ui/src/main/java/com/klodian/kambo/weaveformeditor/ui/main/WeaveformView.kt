@@ -34,6 +34,12 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         alpha = 25
     }
 
+    private val middleLine = Paint().apply {
+        strokeWidth = 2f
+        color = Color.BLACK  // You can set your preferred tint color here
+        alpha = 25
+    }
+
     private val barToBarDistance = 50f
     private val barTouchTolerance = 40f
 
@@ -68,8 +74,8 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
                 drawablePoints.addAll(getDrawablePoints(newCoordinates))
             }
 
-            leftBarPositionX = 0f
-            rightBarPositionX = width.toFloat()
+            leftBarPositionX = 0f + paddingLeft
+            rightBarPositionX = width.toFloat() - paddingEnd
 
             invalidate()
         }
@@ -87,7 +93,6 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         super.onDraw(canvas)
 
         if (coordinates.isEmpty()) return
-
         assert(drawablePoints.size == coordinates.size * 2)
 
         renderWeave(canvas, drawablePoints)
@@ -97,35 +102,48 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         // Draw the left vertical bar
         canvas.drawRect(
             leftBarPositionX - barWidth / 2,
-            0f,
+            0f + paddingTop,
             leftBarPositionX + barWidth / 2,
-            height.toFloat(),
+            height.toFloat() - paddingBottom,
             verticalBarPaint
         )
 
         // Draw the right vertical bar
         canvas.drawRect(
             rightBarPositionX - barWidth / 2,
-            0f,
+            0f + paddingTop,
             rightBarPositionX + barWidth / 2,
-            height.toFloat(),
+            height.toFloat() - paddingBottom,
             verticalBarPaint
         )
 
         // Draw the fixed dot at the bottom
-        canvas.drawCircle(leftBarPositionX, height.toFloat() - 15f, 15f, dotPaint)
-        canvas.drawCircle(rightBarPositionX, 15f, 15f, dotPaint)
+        canvas.drawCircle(
+            leftBarPositionX,
+            getDrawableHeight().toFloat() + paddingTop - 15f,
+            15f,
+            dotPaint
+        )
+        canvas.drawCircle(rightBarPositionX, paddingTop + 15f, 15f, dotPaint)
 
         // Draw the selected slice between the bars
         canvas.drawRect(
-            leftBarPositionX, 0f, rightBarPositionX, height.toFloat(),
+            leftBarPositionX, 0f + paddingTop, rightBarPositionX, height.toFloat() - paddingBottom,
             selectedBarPaint
+        )
+
+        canvas.drawLine(
+            paddingLeft.toFloat().coerceAtLeast(0f),
+            getDrawableHeight().toFloat() / 2 + paddingTop,
+            width.toFloat() - paddingEnd,
+            getDrawableHeight().toFloat() / 2 + paddingTop,
+            middleLine
         )
     }
 
     private fun renderWeave(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
         val weaveFormPath = Path()
-        weaveFormPath.moveTo(0f, drawablePoints.first().yDraw)
+        weaveFormPath.moveTo(drawablePoints.first().xDraw, drawablePoints.first().yDraw)
 
         drawablePoints.onEach { weaveFormPath.lineTo(it.xDraw, it.yDraw) }
 
@@ -138,13 +156,15 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-
                 when {
                     (isCloseToBar(leftBarPositionX, event) &&
-                            !isCloseToBar(rightBarPositionX, event)) -> isLeftDragging = true
+                            !isCloseToBar(rightBarPositionX, event)) &&
+                            (event.y in paddingTop.toFloat()..(getDrawableHeight().toFloat() + paddingTop))
+                    -> isLeftDragging = true
 
                     (!isCloseToBar(leftBarPositionX, event) &&
-                            isCloseToBar(rightBarPositionX, event)) -> isRightDragging = true
+                            isCloseToBar(rightBarPositionX, event)) &&
+                            (event.y in paddingTop.toFloat()..(getDrawableHeight().toFloat()+paddingTop)) -> isRightDragging = true
 
                     else -> requestedClick = true
                 }
@@ -152,11 +172,18 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
             MotionEvent.ACTION_MOVE -> {
                 if (isLeftDragging) {
-                    leftBarPositionX = event.x.coerceIn(0f, rightBarPositionX - barWidth - barToBarDistance)
+                    leftBarPositionX =
+                        event.x.coerceIn(
+                            paddingLeft.toFloat().coerceAtLeast(0f),
+                            rightBarPositionX - barWidth - barToBarDistance
+                        )
                     invalidate()
                 } else if (isRightDragging) {
                     rightBarPositionX =
-                        event.x.coerceIn(leftBarPositionX + barWidth + barToBarDistance, width.toFloat())
+                        event.x.coerceIn(
+                            leftBarPositionX + barWidth + barToBarDistance,
+                            width.toFloat() - paddingEnd
+                        )
                     invalidate()
                 }
             }
@@ -187,7 +214,8 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
     private fun getDrawablePoints(uiWeaveFrequencies: List<UiWeaveFrequency>): List<DrawablePoint> {
         val drawablePoints = mutableListOf<DrawablePoint>()
-        val widthMultiplier = width / ((uiWeaveFrequencies.size - 1).takeIf { it > 0 } ?: 1)
+        val widthMultiplier =
+            getDrawableWidth() / ((uiWeaveFrequencies.size - 1).takeIf { it > 0 } ?: 1)
 
         var coordinatesIterator: Iterator<UiWeaveFrequency> = uiWeaveFrequencies.iterator()
         var xIndex = 0
@@ -195,10 +223,10 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
         drawablePoints.add(
             DrawablePoint(
-                xIndex.toFloat() * widthMultiplier,
-                scaleCenterHeight(point.minValue.absoluteValue),
-                xIndex.toFloat(),
-                point.minValue.absoluteValue
+                xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
+                yDraw = scaleCenterHeight(point.minValue.absoluteValue) + paddingTop,
+                xValue = xIndex.toFloat(),
+                yValue = point.minValue.absoluteValue
             )
         )
 
@@ -207,10 +235,10 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             point = coordinatesIterator.next()
             drawablePoints.add(
                 DrawablePoint(
-                    xIndex.toFloat() * widthMultiplier,
-                    scaleCenterHeight(point.minValue.absoluteValue),
-                    xIndex.toFloat(),
-                    point.minValue
+                    xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
+                    yDraw = scaleCenterHeight(point.minValue.absoluteValue) + paddingTop,
+                    xValue = xIndex.toFloat(),
+                    yValue = point.minValue
                 )
             )
         }
@@ -221,10 +249,10 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             point = coordinatesIterator.next()
             drawablePoints.add(
                 DrawablePoint(
-                    xIndex.toFloat() * widthMultiplier,
-                    scaleCenterHeight(-point.maxValue),
-                    xIndex.toFloat(),
-                    point.maxValue
+                    xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
+                    yDraw = scaleCenterHeight(-point.maxValue) + paddingTop,
+                    xValue = xIndex.toFloat(),
+                    yValue = point.maxValue
                 )
             )
             xIndex--
@@ -233,6 +261,13 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     }
 
     private fun scaleCenterHeight(y: Float): Float {
-        return y * height / 2 + height / 2
+        val currentHeightFloat = getDrawableHeight().toFloat()
+        return (y * currentHeightFloat / 2) + currentHeightFloat / 2
     }
+
+    private fun getDrawableHeight() = (height - paddingTop - paddingBottom)
+        .coerceAtLeast(0)
+
+    private fun getDrawableWidth() = (width - paddingLeft - paddingRight)
+        .coerceAtLeast(0)
 }
