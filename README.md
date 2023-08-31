@@ -11,6 +11,9 @@ the one in the sampler pad editor in BandLab’s MixEditor.
 To see how this view looks and behaves, you can reach the sampler pad editor by following 
 the steps in this video: https://drive.google.com/file/d/12ySBW_b2J5TPF_OMnM-YQ936IKrUs7pO/view?usp=sharing
 
+## App Demo
+<img src="https://github.com/KlodianKambo/weaveform-editor/assets/7395096/107d0882-4019-49be-8436-70cb597b4caf" width="50%" height="50%"/>
+
 
 ## Details
 
