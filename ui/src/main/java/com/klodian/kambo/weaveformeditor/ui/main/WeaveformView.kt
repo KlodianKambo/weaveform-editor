@@ -25,20 +25,29 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     private val verticalBarPaint = Paint().apply {
         color = Color.GRAY
     }
-    private val dotPaint = Paint().apply {
-        color = Color.GRAY
-    }
 
-    private val selectedBarPaint = Paint().apply {
-        color = Color.BLUE  // You can set your preferred tint color here
+    private val selectedWeavePaint = Paint().apply {
+        color = Color.BLUE
         alpha = 25
     }
 
     private val referenceLinePaint = Paint().apply {
         strokeWidth = 3f
-        color = Color.BLACK  // You can set your preferred tint color here
+        color = Color.BLACK
         alpha = 25
         style = Paint.Style.STROKE
+    }
+
+    private val weaveLinePaint = Paint().apply {
+        isAntiAlias = true
+        color = Color.CYAN
+        strokeWidth = 3f
+        style = Paint.Style.FILL_AND_STROKE
+    }
+
+    private val textPaint = Paint().apply {
+        color = Color.BLACK
+        textSize = 16f
     }
 
     private val barToBarDistance = 50f
@@ -46,21 +55,13 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
     private var leftBarPositionX = -1f
     private var rightBarPositionX = -1f
+
     private var isLeftDragging = false
     private var isRightDragging = false
-    private val barWidth = 10f
-    private var requestedClick = false
 
-    private val linePaint = Paint().apply {
-        isAntiAlias = true
-        color = Color.YELLOW
-        strokeWidth = 3f
-        style = Paint.Style.FILL_AND_STROKE
-    }
-    private val pointPaint = Paint().apply {
-        color = Color.BLACK
-        textSize = 16f
-    }
+    private val barWidth = 10f
+
+    private var requestedClick = false
 
     private val coordinates = mutableListOf<UiWeaveFrequency>()
     private val drawablePoints = mutableListOf<DrawablePoint>()
@@ -122,14 +123,17 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
         // Draw the selected slice between the bars
         canvas.drawRect(
-            leftBarPositionX, 0f + paddingTop, rightBarPositionX, height.toFloat() - paddingBottom,
-            selectedBarPaint
+            leftBarPositionX,
+            paddingTop.toFloat().coerceAtLeast(0f),
+            rightBarPositionX,
+            height.toFloat() - paddingBottom,
+            selectedWeavePaint
         )
 
         // Draw the left vertical bar
         canvas.drawRect(
             leftBarPositionX - barWidth / 2,
-            0f + paddingTop,
+            paddingTop.toFloat().coerceAtLeast(0f),
             leftBarPositionX + barWidth / 2,
             height.toFloat() - paddingBottom,
             verticalBarPaint
@@ -138,7 +142,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         // Draw the right vertical bar
         canvas.drawRect(
             rightBarPositionX - barWidth / 2,
-            0f + paddingTop,
+            paddingTop.toFloat().coerceAtLeast(0f),
             rightBarPositionX + barWidth / 2,
             height.toFloat() - paddingBottom,
             verticalBarPaint
@@ -149,26 +153,30 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             leftBarPositionX,
             getDrawableHeight() + paddingTop - circleWidth,
             circleWidth,
-            dotPaint
+            verticalBarPaint
         )
 
         canvas.drawCircle(
             rightBarPositionX,
             paddingTop + circleWidth,
             circleWidth,
-            dotPaint
+            verticalBarPaint
         )
     }
 
     private fun renderWeave(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
         val weaveFormPath = Path()
-        weaveFormPath.moveTo(drawablePoints.first().xDraw, drawablePoints.first().yDraw)
+        weaveFormPath.moveTo(
+            drawablePoints.first().xDraw,
+            drawablePoints.first().yDraw)
 
-        drawablePoints.onEach { weaveFormPath.lineTo(it.xDraw, it.yDraw) }
+        drawablePoints.onEach {
+            weaveFormPath.lineTo(it.xDraw, it.yDraw)
+        }
 
         weaveFormPath.close()
 
-        canvas.drawPath(weaveFormPath, linePaint)
+        canvas.drawPath(weaveFormPath, weaveLinePaint)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -228,7 +236,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
     private fun drawTextValues(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
         drawablePoints.onEach {
-            canvas.drawText(String.format("%.1f", it.yValue), it.xDraw, it.yDraw, pointPaint)
+            canvas.drawText(String.format("%.1f", it.yValue), it.xDraw, it.yDraw, textPaint)
         }
     }
 
