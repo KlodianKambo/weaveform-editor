@@ -73,8 +73,18 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             drawablePoints.clear()
 
             if (newCoordinates.isNotEmpty()) {
+
                 coordinates.addAll(newCoordinates)
-                drawablePoints.addAll(getDrawablePoints(newCoordinates))
+
+                val widthMultiplier =
+                    getDrawableWidth() / ((newCoordinates.size - 1).takeIf { it > 0 } ?: 1)
+
+                calculateDrawablePoints(
+                    xIndex = 0,
+                    widthMultiplier = widthMultiplier,
+                    uiWeaveFrequencies = newCoordinates,
+                    outputList = drawablePoints
+                )
             }
 
             leftBarPositionX = 0f + paddingLeft
@@ -168,7 +178,8 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         val weaveFormPath = Path()
         weaveFormPath.moveTo(
             drawablePoints.first().xDraw,
-            drawablePoints.first().yDraw)
+            drawablePoints.first().yDraw
+        )
 
         drawablePoints.onEach {
             weaveFormPath.lineTo(it.xDraw, it.yDraw)
@@ -240,57 +251,41 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         }
     }
 
-    private fun getDrawablePoints(uiWeaveFrequencies: List<UiWeaveFrequency>): List<DrawablePoint> {
-        val drawablePoints = mutableListOf<DrawablePoint>()
-        val widthMultiplier =
-            getDrawableWidth() / ((uiWeaveFrequencies.size - 1).takeIf { it > 0 } ?: 1)
-
-        var coordinatesIterator: Iterator<UiWeaveFrequency> = uiWeaveFrequencies.iterator()
-        var xIndex = 0
-        var point = coordinatesIterator.next()
-
-        drawablePoints.add(
-            DrawablePoint(
-                xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
-                yDraw = scaleCenterHeight(point.minValue.absoluteValue) + paddingTop,
-                xValue = xIndex.toFloat(),
-                yValue = point.minValue.absoluteValue
-            )
-        )
-
-        while (coordinatesIterator.hasNext()) {
-            xIndex++
-            point = coordinatesIterator.next()
-            drawablePoints.add(
-                DrawablePoint(
-                    xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
-                    yDraw = scaleCenterHeight(point.minValue.absoluteValue) + paddingTop,
-                    xValue = xIndex.toFloat(),
-                    yValue = point.minValue
-                )
-            )
-        }
-
-        coordinatesIterator = uiWeaveFrequencies.reversed().iterator()
-
-        while (coordinatesIterator.hasNext()) {
-            point = coordinatesIterator.next()
-            drawablePoints.add(
-                DrawablePoint(
-                    xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
-                    yDraw = scaleCenterHeight(-point.maxValue) + paddingTop,
-                    xValue = xIndex.toFloat(),
-                    yValue = point.maxValue
-                )
-            )
-            xIndex--
-        }
-        return drawablePoints
-    }
-
     private fun scaleCenterHeight(y: Float): Float {
         val currentHeightFloat = getDrawableHeight()
         return (y * currentHeightFloat / 2) + currentHeightFloat / 2
+    }
+
+    private fun calculateDrawablePoints(
+        xIndex: Int,
+        widthMultiplier: Float,
+        uiWeaveFrequencies: List<UiWeaveFrequency>,
+        outputList: MutableList<DrawablePoint>
+    ) {
+
+        if(xIndex == uiWeaveFrequencies.size || xIndex < 0) return
+
+        // add the min values
+        outputList.add(
+            DrawablePoint(
+                xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
+                yDraw = scaleCenterHeight(uiWeaveFrequencies[xIndex].minValue.absoluteValue) + paddingTop,
+                xValue = xIndex.toFloat(),
+                yValue = uiWeaveFrequencies[xIndex].minValue
+            )
+        )
+
+        calculateDrawablePoints(xIndex + 1, widthMultiplier, uiWeaveFrequencies, outputList)
+
+        // add the max values
+        outputList.add(
+            DrawablePoint(
+                xDraw = xIndex.toFloat() * widthMultiplier + paddingLeft,
+                yDraw = scaleCenterHeight(-(uiWeaveFrequencies[xIndex].maxValue.absoluteValue)) + paddingTop,
+                xValue = xIndex.toFloat(),
+                yValue = uiWeaveFrequencies[xIndex].maxValue
+            )
+        )
     }
 
     private fun getDrawableHeight() = (height - paddingTop - paddingBottom)
