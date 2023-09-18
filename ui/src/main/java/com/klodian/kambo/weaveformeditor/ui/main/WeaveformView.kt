@@ -9,6 +9,7 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.view.doOnLayout
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 
@@ -67,32 +68,20 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     private val drawablePoints = mutableListOf<DrawablePoint>()
     private val circleWidth = 20f
 
+
     fun setCoordinates(newCoordinates: List<UiWeaveFrequency>) {
         if (newCoordinates != coordinates) {
             coordinates.clear()
             drawablePoints.clear()
 
-            if (newCoordinates.isNotEmpty()) {
+            coordinates.addAll(newCoordinates)
 
-                coordinates.addAll(newCoordinates)
-
-                val widthMultiplier =
-                    getDrawableWidth() / ((newCoordinates.size - 1).takeIf { it > 0 } ?: 1)
-
-                calculateDrawablePoints(
-                    xIndex = 0,
-                    widthMultiplier = widthMultiplier,
-                    uiWeaveFrequencies = newCoordinates,
-                    outputList = drawablePoints
-                )
+            doOnLayout {
+                calculateNewPointsAndInvalidate(coordinates)
             }
-
-            leftBarPositionX = 0f + paddingLeft
-            rightBarPositionX = width.toFloat() - paddingEnd
-
-            invalidate()
         }
     }
+
 
     fun getSelectedRangeValues(): List<UiWeaveFrequency> {
         return drawablePoints
@@ -106,6 +95,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         super.onDraw(canvas)
 
         if (coordinates.isEmpty()) return
+
         assert(drawablePoints.size == coordinates.size * 2)
 
         renderWeave(canvas, drawablePoints)
@@ -198,11 +188,13 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
                     (isCloseToBar(leftBarPositionX, event) &&
                             !isCloseToBar(rightBarPositionX, event)) &&
                             (event.y in paddingTop.toFloat()..(getDrawableHeight() + paddingTop))
+
                     -> isLeftDragging = true
 
                     (!isCloseToBar(leftBarPositionX, event) &&
                             isCloseToBar(rightBarPositionX, event)) &&
                             (event.y in paddingTop.toFloat()..(getDrawableHeight() + paddingTop))
+
                     -> isRightDragging = true
 
                     else -> requestedClick = true
@@ -216,6 +208,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
                             paddingLeft.toFloat().coerceAtLeast(0f),
                             rightBarPositionX - barWidth - barToBarDistance
                         )
+
                     invalidate()
                 } else if (isRightDragging) {
                     rightBarPositionX =
@@ -223,6 +216,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
                             leftBarPositionX + barWidth + barToBarDistance,
                             width.toFloat() - paddingEnd
                         )
+
                     invalidate()
                 }
             }
@@ -263,7 +257,7 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         outputList: MutableList<DrawablePoint>
     ) {
 
-        if(xIndex == uiWeaveFrequencies.size || xIndex < 0) return
+        if (xIndex == uiWeaveFrequencies.size || xIndex < 0) return
 
         // add the min values
         outputList.add(
@@ -295,4 +289,21 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     private fun getDrawableWidth() = (width - paddingLeft - paddingRight)
         .coerceAtLeast(0)
         .toFloat()
+
+
+    private fun calculateNewPointsAndInvalidate(newCoordinates: List<UiWeaveFrequency>) {
+        calculateDrawablePoints(
+            xIndex = 0,
+            widthMultiplier = getDrawableWidth() /
+                    (newCoordinates.size - 1).coerceAtLeast(1),
+            uiWeaveFrequencies = newCoordinates,
+            outputList = drawablePoints
+        )
+
+        // TODO add proportions
+        leftBarPositionX = 0f + paddingLeft
+        rightBarPositionX = width.toFloat() - paddingEnd
+
+        invalidate()
+    }
 }
