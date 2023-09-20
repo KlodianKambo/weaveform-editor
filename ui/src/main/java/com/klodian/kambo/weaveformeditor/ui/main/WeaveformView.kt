@@ -6,6 +6,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.os.Build
+import android.os.Build.VERSION
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -68,6 +72,13 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
     private val drawablePoints = mutableListOf<DrawablePoint>()
     private val circleWidth = 20f
 
+    companion object {
+        private const val KEY_LEFT_BAR_POSITION = "KEY_LEFT_BAR_POSITION"
+        private const val KEY_RIGHT_BAR_POSITION = "KEY_RIGHT_BAR_POSITION"
+        private const val KEY_VIEW_WIDTH = "KEY_VIEW_WIDTH"
+        private const val KEY_SUPER_STATE = "KEY_SUPER_STATE"
+    }
+
 
     fun setCoordinates(newCoordinates: List<UiWeaveFrequency>) {
         if (newCoordinates != coordinates) {
@@ -76,8 +87,13 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
 
             coordinates.addAll(newCoordinates)
 
-            doOnLayout {
-                calculateNewPointsAndInvalidate(coordinates)
+            if (isAttachedToWindow) {
+                doOnLayout {
+                    leftBarPositionX = 0f + paddingLeft
+                    rightBarPositionX = width.toFloat() - paddingEnd
+
+                    calculateNewPointsAndInvalidate(coordinates)
+                }
             }
         }
     }
@@ -164,21 +180,36 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
         )
     }
 
-    private fun renderWeave(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
-        val weaveFormPath = Path()
-        weaveFormPath.moveTo(
-            drawablePoints.first().xDraw,
-            drawablePoints.first().yDraw
-        )
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state is Bundle) {
+            val savedLeftBarPositionX = state.getFloat(KEY_LEFT_BAR_POSITION)
+            val savedRightBarPositionX = state.getFloat(KEY_RIGHT_BAR_POSITION)
 
-        drawablePoints.onEach {
-            weaveFormPath.lineTo(it.xDraw, it.yDraw)
+            doOnLayout {
+                val widthMultiplier = (width.toFloat() / state.getFloat(KEY_VIEW_WIDTH))
+                leftBarPositionX = savedLeftBarPositionX * widthMultiplier
+                rightBarPositionX = savedRightBarPositionX * widthMultiplier
+                calculateNewPointsAndInvalidate(coordinates)
+            }
+
+            val superState = if (VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+                state.getParcelable(KEY_SUPER_STATE)
+            else
+                state.getParcelable(KEY_SUPER_STATE, Parcelable::class.java)
+
+            super.onRestoreInstanceState(superState)
+        } else {
+            super.onRestoreInstanceState(state)
         }
-
-        weaveFormPath.close()
-
-        canvas.drawPath(weaveFormPath, weaveLinePaint)
     }
+
+    override fun onSaveInstanceState() =
+        Bundle().apply {
+            putParcelable(KEY_SUPER_STATE, super.onSaveInstanceState())
+            putFloat(KEY_LEFT_BAR_POSITION, leftBarPositionX)
+            putFloat(KEY_RIGHT_BAR_POSITION, rightBarPositionX)
+            putFloat(KEY_VIEW_WIDTH, width.toFloat())
+        }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -300,10 +331,23 @@ class WeaveformView(context: Context, attrs: AttributeSet) : View(context, attrs
             outputList = drawablePoints
         )
 
-        // TODO add proportions
-        leftBarPositionX = 0f + paddingLeft
-        rightBarPositionX = width.toFloat() - paddingEnd
-
         invalidate()
     }
+
+    private fun renderWeave(canvas: Canvas, drawablePoints: List<DrawablePoint>) {
+        val weaveFormPath = Path()
+        weaveFormPath.moveTo(
+            drawablePoints.first().xDraw,
+            drawablePoints.first().yDraw
+        )
+
+        drawablePoints.onEach {
+            weaveFormPath.lineTo(it.xDraw, it.yDraw)
+        }
+
+        weaveFormPath.close()
+
+        canvas.drawPath(weaveFormPath, weaveLinePaint)
+    }
+
 }
